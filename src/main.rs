@@ -1,6 +1,7 @@
-use evdev::{Device, Key};
+use evdev::uinput::VirtualDeviceBuilder;
+use evdev::{AttributeSet, Device, EventType, InputEvent, Key};
 use std::io::Error;
-// use std::{thread, time};
+use std::{thread, time};
 
 fn get_fallback_device() -> Result<Device, Error> {
     for i in 0..25 {
@@ -17,32 +18,30 @@ fn get_fallback_device() -> Result<Device, Error> {
 
 fn main() -> Result<(), Error> {
     let mut device = get_fallback_device()?;
+    let mut keys = AttributeSet::<Key>::new();
+
+    let mut virtual_device = VirtualDeviceBuilder::new()?
+        .name("Fake Keyboard")
+        .with_keys(&keys)?
+        .build()
+        .unwrap();
 
     // println!("{:?}", device.supported_keys());
 
     device.grab()?;
 
-    println!("grab");
-
-    let events = device.fetch_events()?;
-
-    events.for_each(|event| {
-        println!("{:?}", event);
-    });
-
-    // println!("{:?}", events.);
-
-    // thread::sleep(time::Duration::from_millis(5000));
-
-    // let res = device.read();
-
     // loop {
-    // println!("{}", "aaaaa");
-    // }
+    for _ in 0..20 {
+        let events = device.fetch_events()?;
+        events.for_each(|event| {
+            println!("{:?}", event);
+            virtual_device.emit(&[event]).unwrap();
+        });
+    }
 
     device.ungrab()?;
 
-    println!("ungrab");
+    // println!("{:?}", events.);
 
     Ok(())
 }
