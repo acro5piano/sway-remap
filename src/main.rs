@@ -1,6 +1,6 @@
 use evdev::{Device, Key};
 use std::io::Error;
-use std::{thread, time};
+// use std::{thread, time};
 
 fn get_fallback_device() -> Result<Device, Error> {
     for i in 0..25 {
@@ -24,7 +24,15 @@ fn main() -> Result<(), Error> {
 
     println!("grab");
 
-    thread::sleep(time::Duration::from_millis(5000));
+    let events = device.fetch_events()?;
+
+    events.for_each(|event| {
+        println!("{:?}", event);
+    });
+
+    // println!("{:?}", events.);
+
+    // thread::sleep(time::Duration::from_millis(5000));
 
     // let res = device.read();
 
