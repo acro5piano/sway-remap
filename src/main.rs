@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut handles = vec![];
 
     // TODO: get sway process from root permission (or vice versa)
-    let conn = Connection::new()?;
+    let conn = Connection::new(Some("/run/user/1000/sway-ipc.1000.1663.sock".to_string()))?;
 
     /////////////////////////
     // Sway subscribe part
