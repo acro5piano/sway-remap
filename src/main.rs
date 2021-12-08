@@ -112,17 +112,16 @@ fn get_keyboard_device() -> Result<Device, Box<dyn Error>> {
 
 fn get_window_class(evt: Option<Result<reply::Event, swayipc::Error>>) -> String {
     match evt {
-        Some(Ok(window_event)) => match window_event {
-            reply::Event::Window(b) => match (b.container.app_id, b.container.window_properties) {
+        Some(Ok(reply::Event::Window(w))) => {
+            match (w.container.app_id, w.container.window_properties) {
                 (Some(id), _) => id,
                 (_, Some(props)) => match props.class {
                     Some(class) => class,
                     _ => panic!("Cannot get window id"),
                 },
-                _ => panic!("Cannot get window id"),
-            },
-            _ => panic!("Cannot get window id"),
-        },
+                (_, _) => panic!("Cannot get window id"),
+            }
+        }
         _ => panic!("Cannot get window id"),
     }
 }
