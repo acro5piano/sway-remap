@@ -12,3 +12,5 @@ uinput-sys = "0.1.7"
 signal-hook = "0.3.11"
 # swayipc = "2.7.2"
 swayipc = { git = "https://github.com/acro5piano/swayipc-rs", branch = "feature/pass-path" }
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.8"

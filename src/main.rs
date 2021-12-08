@@ -1,4 +1,6 @@
 use evdev::{Device, InputEventKind, Key};
+use serde::{Deserialize, Serialize};
+use serde_yaml;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
@@ -6,13 +8,49 @@ use swayipc::{reply, Connection, EventType};
 use uinput;
 use uinput_sys::EV_KEY;
 
+mod keycodes;
+
 const CAPS: u16 = 58;
 
+const test_config: &str = r#"---
+- applications:
+    - Brave-browser
+    - firefoxdeveloperedition
+  remap:
+    - from: f
+      with: capslock
+      to:
+        - right
+    - from: b
+      with: capslock
+      to:
+        - left
+    - from: p
+      with: capslock
+      to:
+        - up
+"#;
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+struct Setting {
+    applications: Vec<String>,
+    remap: Vec<RemapSetting>,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+struct RemapSetting {
+    from: String,
+    to: Vec<String>,
+    with: Option<String>,
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
+    let settings: Vec<Setting> = serde_yaml::from_str(&test_config)?;
+
     let remap_enabled = Arc::new(Mutex::new(false));
     let mut handles = vec![];
 
-    // TODO: get sway process from root permission (or vice versa)
+    // TODO: get sway socket programatically!
     let conn = Connection::new(Some("/run/user/1000/sway-ipc.1000.25887.sock".to_string()))?;
 
     /////////////////////////
@@ -27,10 +65,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             let window_class = get_window_class(stream.next());
             let mut remap_enabled_lock = remap_enabled_cloned.lock().unwrap();
 
-            if window_class == "Brave-browser" {
-                println!("brave found!");
+            if settings
+                .clone()
+                .iter()
+                .any(|setting| setting.applications.iter().any(|app| app == &window_class))
+            {
+                println!("Remap enabled for {}", window_class);
                 *remap_enabled_lock = true;
             } else {
+                println!("Remap disabled for {}", window_class);
                 *remap_enabled_lock = false;
             }
         }
