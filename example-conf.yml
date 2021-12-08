@@ -2,45 +2,46 @@
     - Brave-browser
     - firefoxdeveloperedition
   remap:
-    - key: f
-      with: capslock
-      to:
-        - key: right
-    - key: b
-      with: capslock
-      to:
-        - key: left
-    - key: p
-      with: capslock
-      to:
-        - key: up
-    - key: n
-      with: capslock
-      to:
-        - key: down
-    - key: a
-      with: capslock
-      to:
-        - key: home
-    - key: e
-      with: capslock
-      to:
-        - key: end
+    - from: capslock.f
+      to: [right]
+    - from: capslock.k
+      to: [leftshift.end, leftctrl.x]
 
-    - key: y
-      with: capslock
-      to:
-        - key: v
-          with: rightctrl
-
-    - key: k
-      with: capslock
-      to:
-        - key: end
-          with: leftshift
-        - key: x
-          with: rightctrl
-    - key: h
-      with: capslock
-      to:
-        - key: backspace
+    # - key: b
+    #   with: capslock
+    #   to:
+    #     - key: left
+    # - key: p
+    #   with: capslock
+    #   to:
+    #     - key: up
+    # - key: n
+    #   with: capslock
+    #   to:
+    #     - key: down
+    # - key: a
+    #   with: capslock
+    #   to:
+    #     - key: home
+    # - key: e
+    #   with: capslock
+    #   to:
+    #     - key: end
+    #
+    # - key: y
+    #   with: capslock
+    #   to:
+    #     - key: v
+    #       with: rightctrl
+    #
+    # - key: k
+    #   with: capslock
+    #   to:
+    #     - key: end
+    #       with: leftshift
+    #     - key: x
+    #       with: rightctrl
+    # - key: h
+    #   with: capslock
+    #   to:
+    #     - key: backspace

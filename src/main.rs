@@ -1,5 +1,5 @@
 use evdev::InputEventKind;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_yaml;
 use std::env;
 use std::error::Error;
@@ -12,27 +12,21 @@ use uinput_sys::EV_KEY;
 
 mod utils;
 
+use utils::config_parser::ConfigKeyCombination;
 use utils::input;
 use utils::keycodes;
 use utils::wayland;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Deserialize, Clone)]
 struct Setting {
     applications: Vec<String>,
     remap: Vec<RemapSetting>,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Deserialize, Clone)]
 struct RemapSetting {
-    key: String,
-    with: Option<String>,
-    to: Vec<MapTo>,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
-struct MapTo {
-    key: String,
-    with: Option<String>,
+    from: ConfigKeyCombination,
+    to: Vec<ConfigKeyCombination>,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -41,6 +35,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         fs::read_to_string(&args[1]).expect("Something went wrong reading the config file");
     let settings: Vec<Setting> =
         serde_yaml::from_str(&config_str).expect("Unable to read config file");
+
+    println!("{:?}", settings);
 
     let remap_enabled = Arc::new(Mutex::new(false));
     let mut handles = vec![];
@@ -100,10 +96,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         let remap_enabled_ = *remap_enabled_cloned_2.lock().unwrap();
         let events = device.fetch_events().unwrap();
         events.for_each(|event| {
-            // println!("{:?}", event);
+            println!("{:?}", event);
             match event.kind() {
                 InputEventKind::Key(orig_key) => {
-                    // println!("{:?}", key);
+                    // println!("{:?}", orig_key);
+
                     if !remap_enabled_ {
                         virtual_input
                             .write(EV_KEY, orig_key.code() as i32, event.value())
@@ -121,43 +118,53 @@ fn main() -> Result<(), Box<dyn Error>> {
                     let mut handled = false;
                     settings_2.iter().for_each(|setting| {
                         setting.remap.iter().for_each(|remap| {
-                            if is_caps_pressing
-                                && remap.key == keycodes::code_to_name(orig_key.code())
-                            {
-                                handled = true;
-                                match &remap.with {
-                                    Some(w) => virtual_input
-                                        .write(EV_KEY, keycodes::name_to_code(&w), 0)
-                                        .unwrap(),
-                                    _ => {}
-                                };
-                                remap.to.iter().for_each(|to| {
-                                    match &to.with {
-                                        Some(w) => virtual_input
-                                            .write(EV_KEY, keycodes::name_to_code(&w), 1)
-                                            .unwrap(),
-                                        _ => {}
-                                    };
-                                    virtual_input
-                                        .write(
-                                            EV_KEY,
-                                            keycodes::name_to_code(&to.key),
-                                            event.value(),
-                                        )
-                                        .unwrap();
-                                    match &to.with {
-                                        Some(w) => virtual_input
-                                            .write(EV_KEY, keycodes::name_to_code(&w), 0)
-                                            .unwrap(),
-                                        _ => {}
-                                    };
-                                });
-                                match &remap.with {
-                                    Some(w) => virtual_input
-                                        .write(EV_KEY, keycodes::name_to_code(&w), 1)
-                                        .unwrap(),
-                                    _ => {}
-                                };
+                            // println!("{:?}", remap);
+                            if is_caps_pressing && remap.from.is_ctrl {
+                                if remap.from.keyname == keycodes::code_to_name(orig_key.code()) {
+                                    handled = true;
+                                    if remap.from.is_ctrl {
+                                        virtual_input
+                                            .write(EV_KEY, keycodes::name_to_code("capslock"), 0)
+                                            .unwrap();
+                                    }
+                                    remap.to.iter().for_each(|to| {
+                                        if to.is_ctrl {
+                                            virtual_input
+                                                .write(
+                                                    EV_KEY,
+                                                    keycodes::name_to_code("capslock"),
+                                                    1,
+                                                )
+                                                .unwrap();
+                                        }
+                                        virtual_input
+                                            .write(
+                                                EV_KEY,
+                                                keycodes::name_to_code(&to.keyname),
+                                                event.value(),
+                                            )
+                                            .unwrap();
+                                        if to.is_ctrl {
+                                            virtual_input
+                                                .write(
+                                                    EV_KEY,
+                                                    keycodes::name_to_code("capslock"),
+                                                    0,
+                                                )
+                                                .unwrap();
+                                        }
+                                    });
+                                } else {
+                                    // if remap.from.is_ctrl {
+                                    //     virtual_input
+                                    //         .write(
+                                    //             EV_KEY,
+                                    //             keycodes::name_to_code("capslock"),
+                                    //             event.value(),
+                                    //         )
+                                    //         .unwrap();
+                                    // }
+                                }
                             }
                         });
                     });
