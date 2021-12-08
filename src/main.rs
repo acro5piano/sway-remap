@@ -96,75 +96,71 @@ fn main() -> Result<(), Box<dyn Error>> {
         let remap_enabled_ = *remap_enabled_cloned_2.lock().unwrap();
         let events = device.fetch_events().unwrap();
         events.for_each(|event| {
-            println!("{:?}", event);
+            // println!("{:?}", event);
             match event.kind() {
-                InputEventKind::Key(key) => {
-                    println!("{:?}", key);
-                    // caps
-                    match (keycodes::code_to_name(key.code()), event.value()) {
+                InputEventKind::Key(orig_key) => {
+                    // println!("{:?}", key);
+                    if !remap_enabled_ {
+                        virtual_input
+                            .write(EV_KEY, orig_key.code() as i32, event.value())
+                            .unwrap();
+                        return;
+                    }
+
+                    // capture ctrl and meta key
+                    match (keycodes::code_to_name(orig_key.code()), event.value()) {
                         ("capslock", 1) => is_caps_pressing = true,
                         ("capslock", 0) => is_caps_pressing = false,
                         (_, _) => {}
                     }
-                    if remap_enabled_
-                        && is_caps_pressing
-                        && settings_2.iter().any(|setting| {
-                            setting
-                                .remap
-                                .iter()
-                                .any(|r| r.key == keycodes::code_to_name(key.code()))
-                        })
-                    {
-                        let setting = match settings_2.iter().find(|setting| {
-                            setting
-                                .remap
-                                .iter()
-                                .any(|r| r.key == keycodes::code_to_name(key.code()))
-                        }) {
-                            Some(s) => s,
-                            _ => unreachable!("Logic error"),
-                        };
-                        let key = match setting
-                            .remap
-                            .iter()
-                            .find(|r| r.key == keycodes::code_to_name(key.code()))
-                        {
-                            Some(s) => s,
-                            _ => unreachable!("Logic error"),
-                        };
-                        // Clear modifier key before executing the combination!
-                        match &key.with {
-                            Some(w) => virtual_input
-                                .write(EV_KEY, keycodes::name_to_code(&w), 0)
-                                .unwrap(),
-                            _ => {}
-                        };
-                        key.to.iter().for_each(|to| {
-                            match &to.with {
-                                Some(w) => virtual_input
-                                    .write(EV_KEY, keycodes::name_to_code(&w), 1)
-                                    .unwrap(),
-                                _ => {}
-                            };
-                            virtual_input
-                                .write(EV_KEY, keycodes::name_to_code(&to.key), event.value())
-                                .unwrap();
-                            match &to.with {
-                                Some(w) => virtual_input
-                                    .write(EV_KEY, keycodes::name_to_code(&w), 0)
-                                    .unwrap(),
-                                _ => {}
-                            };
+
+                    let mut handled = false;
+                    settings_2.iter().for_each(|setting| {
+                        setting.remap.iter().for_each(|remap| {
+                            if is_caps_pressing
+                                && remap.key == keycodes::code_to_name(orig_key.code())
+                            {
+                                handled = true;
+                                match &remap.with {
+                                    Some(w) => virtual_input
+                                        .write(EV_KEY, keycodes::name_to_code(&w), 0)
+                                        .unwrap(),
+                                    _ => {}
+                                };
+                                remap.to.iter().for_each(|to| {
+                                    match &to.with {
+                                        Some(w) => virtual_input
+                                            .write(EV_KEY, keycodes::name_to_code(&w), 1)
+                                            .unwrap(),
+                                        _ => {}
+                                    };
+                                    virtual_input
+                                        .write(
+                                            EV_KEY,
+                                            keycodes::name_to_code(&to.key),
+                                            event.value(),
+                                        )
+                                        .unwrap();
+                                    match &to.with {
+                                        Some(w) => virtual_input
+                                            .write(EV_KEY, keycodes::name_to_code(&w), 0)
+                                            .unwrap(),
+                                        _ => {}
+                                    };
+                                });
+                                match &remap.with {
+                                    Some(w) => virtual_input
+                                        .write(EV_KEY, keycodes::name_to_code(&w), 1)
+                                        .unwrap(),
+                                    _ => {}
+                                };
+                            }
                         });
-                        match &key.with {
-                            Some(w) => virtual_input
-                                .write(EV_KEY, keycodes::name_to_code(&w), 1)
-                                .unwrap(),
-                            _ => {}
-                        };
-                    } else {
+                    });
+
+                    if !handled {
                         virtual_input
-                            .write(EV_KEY, key.code() as i32, event.value())
+                            .write(EV_KEY, orig_key.code() as i32, event.value())
                             .unwrap();
                     }
                 }

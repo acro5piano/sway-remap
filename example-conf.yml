@@ -18,6 +18,14 @@
       with: capslock
       to:
         - key: down
+    - key: a
+      with: capslock
+      to:
+        - key: home
+    - key: e
+      with: capslock
+      to:
+        - key: end
     - key: k
       with: capslock
       to:
@@ -25,3 +33,7 @@
           with: leftshift
         - key: x
           with: rightctrl
+    - key: h
+      with: capslock
+      to:
+        - key: backspace
