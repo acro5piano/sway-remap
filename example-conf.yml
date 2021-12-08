@@ -1,0 +1,20 @@
+- applications:
+    - Brave-browser
+    - firefoxdeveloperedition
+  remap:
+    - key: f
+      with: capslock
+      to:
+        - right
+    - key: b
+      with: capslock
+      to:
+        - left
+    - key: p
+      with: capslock
+      to:
+        - up
+    - key: n
+      with: capslock
+      to:
+        - up

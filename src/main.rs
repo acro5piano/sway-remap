@@ -1,7 +1,9 @@
 use evdev::{Device, InputEventKind, Key};
 use serde::{Deserialize, Serialize};
 use serde_yaml;
+use std::env;
 use std::error::Error;
+use std::fs;
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
 use swayipc::{reply, Connection, EventType};
@@ -12,29 +14,6 @@ mod keycodes;
 
 const CAPS: u16 = 58;
 
-const TEST_CONFIG: &str = r#"---
-- applications:
-    - Brave-browser
-    - firefoxdeveloperedition
-  remap:
-    - from: f
-      with: capslock
-      to:
-        - right
-    - from: b
-      with: capslock
-      to:
-        - left
-    - from: p
-      with: capslock
-      to:
-        - up
-    - from: n
-      with: capslock
-      to:
-        - up
-"#;
-
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 struct Setting {
     applications: Vec<String>,
@@ -43,13 +22,17 @@ struct Setting {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 struct RemapSetting {
-    from: String,
+    key: String,
     to: Vec<String>,
     with: Option<String>,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let settings: Vec<Setting> = serde_yaml::from_str(&TEST_CONFIG)?;
+    let args: Vec<String> = env::args().collect();
+    let config_str =
+        fs::read_to_string(&args[1]).expect("Something went wrong reading the config file");
+    let settings: Vec<Setting> =
+        serde_yaml::from_str(&config_str).expect("Unable to read config file");
 
     let remap_enabled = Arc::new(Mutex::new(false));
     let mut handles = vec![];
@@ -125,14 +108,14 @@ fn main() -> Result<(), Box<dyn Error>> {
                             setting
                                 .remap
                                 .iter()
-                                .any(|r| r.from == keycodes::code_to_name(key.code()))
+                                .any(|r| r.key == keycodes::code_to_name(key.code()))
                         })
                     {
                         let setting = match settings_2.iter().find(|setting| {
                             setting
                                 .remap
                                 .iter()
-                                .any(|r| r.from == keycodes::code_to_name(key.code()))
+                                .any(|r| r.key == keycodes::code_to_name(key.code()))
                         }) {
                             Some(s) => s,
                             _ => unreachable!("Logic error"),
@@ -140,7 +123,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         let key = match setting
                             .remap
                             .iter()
-                            .find(|r| r.from == keycodes::code_to_name(key.code()))
+                            .find(|r| r.key == keycodes::code_to_name(key.code()))
                         {
                             Some(s) => s,
                             _ => unreachable!("Logic error"),
