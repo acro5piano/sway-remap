@@ -19,7 +19,7 @@ curl -s "$URL" |\
  */
 
 #[allow(unreachable_patterns)]
-pub fn code_to_name(x: i32) -> &'static str {
+pub fn code_to_name(x: u16) -> &'static str {
     match x {
         0 => "reserved",
         1 => "esc",

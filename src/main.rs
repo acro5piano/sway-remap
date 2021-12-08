@@ -29,6 +29,10 @@ const TEST_CONFIG: &str = r#"---
       with: capslock
       to:
         - up
+    - from: n
+      with: capslock
+      to:
+        - up
 "#;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
@@ -57,6 +61,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Sway subscribe part
     /////////////////////////
     let remap_enabled_cloned = Arc::clone(&remap_enabled);
+    let settings_1 = settings.clone();
     handles.push(thread::spawn(move || {
         let mut stream = conn
             .subscribe(&[EventType::Window])
@@ -65,8 +70,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let window_class = get_window_class(stream.next());
             let mut remap_enabled_lock = remap_enabled_cloned.lock().unwrap();
 
-            if settings
-                .clone()
+            if settings_1
                 .iter()
                 .any(|setting| setting.applications.iter().any(|app| app == &window_class))
             {
@@ -100,6 +104,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut is_caps_pressing = false;
 
     let remap_enabled_cloned_2 = Arc::clone(&remap_enabled);
+    let settings_2 = settings.clone();
     handles.push(thread::spawn(move || loop {
         let remap_enabled_ = *remap_enabled_cloned_2.lock().unwrap();
         let events = device.fetch_events().unwrap();
@@ -114,12 +119,40 @@ fn main() -> Result<(), Box<dyn Error>> {
                         (CAPS, 0) => is_caps_pressing = false,
                         (_, _) => {}
                     }
-                    if remap_enabled_ && is_caps_pressing && key.code() == 33 {
+                    if remap_enabled_
+                        && is_caps_pressing
+                        && settings_2.iter().any(|setting| {
+                            setting
+                                .remap
+                                .iter()
+                                .any(|r| r.from == keycodes::code_to_name(key.code()))
+                        })
+                    {
+                        let setting = match settings_2.iter().find(|setting| {
+                            setting
+                                .remap
+                                .iter()
+                                .any(|r| r.from == keycodes::code_to_name(key.code()))
+                        }) {
+                            Some(s) => s,
+                            _ => unreachable!("Logic error"),
+                        };
+                        let key = match setting
+                            .remap
+                            .iter()
+                            .find(|r| r.from == keycodes::code_to_name(key.code()))
+                        {
+                            Some(s) => s,
+                            _ => unreachable!("Logic error"),
+                        };
                         // Clear CapsLock before executing the combination!
                         virtual_input.write(EV_KEY, CAPS as i32, 0).unwrap();
-                        virtual_input
-                            .write(EV_KEY, 106 as i32, event.value())
-                            .unwrap();
+                        key.to.iter().for_each(|to| {
+                            virtual_input
+                                .write(EV_KEY, keycodes::name_to_code(to), event.value())
+                                .unwrap()
+                        });
+                        virtual_input.write(EV_KEY, CAPS as i32, 1).unwrap();
                     } else {
                         virtual_input
                             .write(EV_KEY, key.code() as i32, event.value())
@@ -160,6 +193,8 @@ fn get_keyboard_device() -> Result<Device, Box<dyn Error>> {
 fn get_window_class(evt: Option<Result<reply::Event, swayipc::Error>>) -> String {
     match evt {
         Some(Ok(reply::Event::Window(w))) => {
+            // app_id => native wayland
+            // xwayland => window_properties.class
             match (w.container.app_id, w.container.window_properties) {
                 (Some(id), _) => id,
                 (_, Some(props)) => match props.class {
