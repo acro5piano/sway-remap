@@ -12,7 +12,7 @@ mod keycodes;
 
 const CAPS: u16 = 58;
 
-const test_config: &str = r#"---
+const TEST_CONFIG: &str = r#"---
 - applications:
     - Brave-browser
     - firefoxdeveloperedition
@@ -45,7 +45,7 @@ struct RemapSetting {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let settings: Vec<Setting> = serde_yaml::from_str(&test_config)?;
+    let settings: Vec<Setting> = serde_yaml::from_str(&TEST_CONFIG)?;
 
     let remap_enabled = Arc::new(Mutex::new(false));
     let mut handles = vec![];
