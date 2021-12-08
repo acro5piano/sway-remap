@@ -1,5 +1,4 @@
-use evdev::uinput::VirtualDeviceBuilder;
-use evdev::{AttributeSet, Device, EventType, InputEvent, Key};
+use evdev::{Device, InputEventKind, Key};
 use std::error::Error;
 use std::{thread, time};
 use uinput;
@@ -20,49 +19,36 @@ fn get_fallback_device() -> Result<Device, Box<dyn Error>> {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut device = get_fallback_device()?;
-    let mut keys = AttributeSet::<Key>::new();
 
     let mut virtual_input = uinput::default()?
-        .name("/dev/input/event26")?
+        .name("/dev/uinput")?
         .event(uinput::event::Keyboard::All)?
         .event(uinput::event::Controller::All)?
         .create()?;
 
-    // for item in uinput::event::relative::Position::iter_variants() {
-    //     builder = builder.event(item)?;
-    // }
-    // for item in uinput::event::relative::Wheel::iter_variants() {
-    //     builder = builder.event(item)?;
-    // }
+    thread::sleep(time::Duration::from_secs(1));
 
-    virtual_input.write(EV_KEY, 19, 1)?;
-    virtual_input.synchronize()?;
+    device.grab()?;
 
-    for _ in 0..20 {
-        virtual_input.write(EV_KEY, 19, 1)?;
-        virtual_input.synchronize()?;
+    loop {
+        let events = device.fetch_events()?;
+        events.for_each(|event| {
+            println!("{:?}", event);
+            match event.kind() {
+                InputEventKind::Key(key) => {
+                    virtual_input
+                        .write(EV_KEY, key.code() as i32, event.value())
+                        .unwrap();
+                }
+                InputEventKind::Synchronization(_) => {
+                    virtual_input.synchronize().unwrap();
+                }
+                _ => {}
+            }
+        });
     }
 
-    // let mut virtual_device = VirtualDeviceBuilder::new()?
-    //     .name("Fake Keyboard")
-    //     .with_keys(&keys)?
-    //     .build()
-    //     .unwrap();
-
-    // println!("{:?}", device.supported_keys());
-
-    // device.grab()?;
-    //
-    // // loop {
-    // for _ in 0..20 {
-    //     let events = device.fetch_events()?;
-    //     events.for_each(|event| {
-    //         println!("{:?}", event);
-    //         virtual_device.emit(&[event]).unwrap();
-    //     });
-    // }
-    //
-    // device.ungrab()?;
+    device.ungrab()?;
 
     // println!("{:?}", events.);
 
