@@ -12,8 +12,6 @@ use uinput_sys::EV_KEY;
 
 mod keycodes;
 
-const CAPS: u16 = 58;
-
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 struct Setting {
     applications: Vec<String>,
@@ -23,7 +21,13 @@ struct Setting {
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 struct RemapSetting {
     key: String,
-    to: Vec<String>,
+    with: Option<String>,
+    to: Vec<MapTo>,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+struct MapTo {
+    key: String,
     with: Option<String>,
 }
 
@@ -97,9 +101,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                 InputEventKind::Key(key) => {
                     println!("{:?}", key);
                     // caps
-                    match (key.code(), event.value()) {
-                        (CAPS, 1) => is_caps_pressing = true,
-                        (CAPS, 0) => is_caps_pressing = false,
+                    match (keycodes::code_to_name(key.code()), event.value()) {
+                        ("capslock", 1) => is_caps_pressing = true,
+                        ("capslock", 0) => is_caps_pressing = false,
                         (_, _) => {}
                     }
                     if remap_enabled_
@@ -128,14 +132,36 @@ fn main() -> Result<(), Box<dyn Error>> {
                             Some(s) => s,
                             _ => unreachable!("Logic error"),
                         };
-                        // Clear CapsLock before executing the combination!
-                        virtual_input.write(EV_KEY, CAPS as i32, 0).unwrap();
+                        // Clear modifier key before executing the combination!
+                        match &key.with {
+                            Some(w) => virtual_input
+                                .write(EV_KEY, keycodes::name_to_code(&w), 0)
+                                .unwrap(),
+                            _ => {}
+                        };
                         key.to.iter().for_each(|to| {
+                            match &to.with {
+                                Some(w) => virtual_input
+                                    .write(EV_KEY, keycodes::name_to_code(&w), 1)
+                                    .unwrap(),
+                                _ => {}
+                            };
                             virtual_input
-                                .write(EV_KEY, keycodes::name_to_code(to), event.value())
-                                .unwrap()
+                                .write(EV_KEY, keycodes::name_to_code(&to.key), event.value())
+                                .unwrap();
+                            match &to.with {
+                                Some(w) => virtual_input
+                                    .write(EV_KEY, keycodes::name_to_code(&w), 0)
+                                    .unwrap(),
+                                _ => {}
+                            };
                         });
-                        virtual_input.write(EV_KEY, CAPS as i32, 1).unwrap();
+                        match &key.with {
+                            Some(w) => virtual_input
+                                .write(EV_KEY, keycodes::name_to_code(&w), 1)
+                                .unwrap(),
+                            _ => {}
+                        };
                     } else {
                         virtual_input
                             .write(EV_KEY, key.code() as i32, event.value())

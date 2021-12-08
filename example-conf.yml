@@ -5,16 +5,23 @@
     - key: f
       with: capslock
       to:
-        - right
+        - key: right
     - key: b
       with: capslock
       to:
-        - left
+        - key: left
     - key: p
       with: capslock
       to:
-        - up
+        - key: up
     - key: n
       with: capslock
       to:
-        - up
+        - key: down
+    - key: k
+      with: capslock
+      to:
+        - key: end
+          with: leftshift
+        - key: x
+          with: rightctrl
