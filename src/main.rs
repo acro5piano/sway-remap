@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut handles = vec![];
 
     // TODO: get sway process from root permission (or vice versa)
-    let conn = Connection::new(Some("/run/user/1000/sway-ipc.1000.1623.sock".to_string()))?;
+    let conn = Connection::new(Some("/run/user/1000/sway-ipc.1000.25887.sock".to_string()))?;
 
     /////////////////////////
     // Sway subscribe part
@@ -72,6 +72,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                         (_, _) => {}
                     }
                     if remap_enabled_ && is_caps_pressing && key.code() == 33 {
+                        // Clear CapsLock before executing the combination!
+                        virtual_input.write(EV_KEY, CAPS as i32, 0).unwrap();
                         virtual_input
                             .write(EV_KEY, 106 as i32, event.value())
                             .unwrap();
