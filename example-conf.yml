@@ -26,6 +26,13 @@
       with: capslock
       to:
         - key: end
+
+    - key: y
+      with: capslock
+      to:
+        - key: v
+          with: rightctrl
+
     - key: k
       with: capslock
       to:
