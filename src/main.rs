@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut handles = vec![];
 
     // TODO: get sway process from root permission (or vice versa)
-    let conn = Connection::new(Some("/run/user/1000/sway-ipc.1000.1663.sock".to_string()))?;
+    let conn = Connection::new(Some("/run/user/1000/sway-ipc.1000.1623.sock".to_string()))?;
 
     /////////////////////////
     // Sway subscribe part
@@ -39,9 +39,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     /////////////////////////
     // Keyboard part
     /////////////////////////
-    let mut device = get_keyboard_device()?;
+    let mut device = get_keyboard_device().expect("Failed to get keyboard device");
 
-    let mut virtual_input = uinput::default()?
+    let mut virtual_input = uinput::default()
+        .expect("Please load uinput module; Possibly you should run `modprobe uinput`")
         .name("/dev/uinput")?
         .event(uinput::event::Keyboard::All)?
         .event(uinput::event::Controller::All)?
