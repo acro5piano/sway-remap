@@ -1,4 +1,4 @@
-use evdev::{Device, InputEventKind, Key};
+use evdev::InputEventKind;
 use serde::{Deserialize, Serialize};
 use serde_yaml;
 use std::env;
@@ -6,11 +6,15 @@ use std::error::Error;
 use std::fs;
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
-use swayipc::{reply, Connection, EventType};
+use swayipc::{Connection, EventType};
 use uinput;
 use uinput_sys::EV_KEY;
 
-mod keycodes;
+mod utils;
+
+use utils::input;
+use utils::keycodes;
+use utils::wayland;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 struct Setting {
@@ -54,7 +58,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             .subscribe(&[EventType::Window])
             .expect("Unable to subscribe sway");
         loop {
-            let window_class = get_window_class(stream.next());
+            let window_class = wayland::get_window_class(stream.next());
             let mut remap_enabled_lock = remap_enabled_cloned.lock().unwrap();
 
             if settings_1
@@ -73,7 +77,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     /////////////////////////
     // Keyboard part
     /////////////////////////
-    let mut device = get_keyboard_device().expect("Failed to get keyboard device");
+    let mut device = input::get_keyboard_device().expect("Failed to get keyboard device");
 
     let mut virtual_input = uinput::default()
         .expect("Please load uinput module; Possibly you should run `modprobe uinput`")
@@ -180,35 +184,4 @@ fn main() -> Result<(), Box<dyn Error>> {
     // device.ungrab()?;
     //
     Ok(())
-}
-
-fn get_keyboard_device() -> Result<Device, Box<dyn Error>> {
-    for i in 0..25 {
-        let device = Device::open(format!("/dev/input/event{}", i))?;
-        if device
-            .supported_keys()
-            .map_or(false, |keys| keys.contains(Key::KEY_ENTER))
-        {
-            return Ok(device);
-        }
-    }
-    panic!("Cannot infer default device");
-}
-
-fn get_window_class(evt: Option<Result<reply::Event, swayipc::Error>>) -> String {
-    match evt {
-        Some(Ok(reply::Event::Window(w))) => {
-            // app_id => native wayland
-            // xwayland => window_properties.class
-            match (w.container.app_id, w.container.window_properties) {
-                (Some(id), _) => id,
-                (_, Some(props)) => match props.class {
-                    Some(class) => class,
-                    _ => panic!("Cannot get window id"),
-                },
-                (_, _) => panic!("Cannot get window id"),
-            }
-        }
-        _ => panic!("Cannot get window id"),
-    }
 }
