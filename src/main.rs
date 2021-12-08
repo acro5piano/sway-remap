@@ -29,6 +29,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // To wait virtual_input is ready (important)
     thread::sleep(time::Duration::from_secs(1));
 
+    // Intercept real input
     device.grab()?;
 
     loop {
@@ -49,9 +50,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         });
     }
 
-    device.ungrab()?;
-
-    // println!("{:?}", events.);
-
-    Ok(())
+    // TODO: add cleanup function
+    //
+    // device.ungrab()?;
+    //
+    // Ok(())
 }
