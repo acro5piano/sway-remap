@@ -26,6 +26,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .event(uinput::event::Controller::All)?
         .create()?;
 
+    // To wait virtual_input is ready (important)
     thread::sleep(time::Duration::from_secs(1));
 
     device.grab()?;
