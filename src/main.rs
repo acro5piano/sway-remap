@@ -17,6 +17,8 @@ fn get_fallback_device() -> Result<Device, Box<dyn Error>> {
     panic!("Cannot infer default device");
 }
 
+const CAPS: u16 = 58;
+
 fn main() -> Result<(), Box<dyn Error>> {
     let mut device = get_fallback_device()?;
 
@@ -32,15 +34,26 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Intercept real input
     device.grab()?;
 
+    let mut is_caps_pressing = false;
+
     loop {
         let events = device.fetch_events()?;
         events.for_each(|event| {
             println!("{:?}", event);
             match event.kind() {
                 InputEventKind::Key(key) => {
+                    // caps
+                    match (key.code(), event.value()) {
+                        (CAPS, 1) => is_caps_pressing = true,
+                        (CAPS, 0) => is_caps_pressing = false,
+                        (_, _) => {}
+                    }
                     virtual_input
                         .write(EV_KEY, key.code() as i32, event.value())
                         .unwrap();
+                    if is_caps_pressing && key.code() == 38 {
+                        println!("++++++++++++++++++++++++++++LLLLLLLLLLLLLLLLLl+++++++++++++++++");
+                    }
                 }
                 InputEventKind::Synchronization(_) => {
                     virtual_input.synchronize().unwrap();
