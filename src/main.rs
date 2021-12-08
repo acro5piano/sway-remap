@@ -59,14 +59,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let remap_enabled_cloned_2 = Arc::clone(&remap_enabled);
     handles.push(thread::spawn(move || loop {
         let remap_enabled_lock = *remap_enabled_cloned_2.lock().unwrap();
-        if remap_enabled_lock == false {
-            continue;
-        }
         let events = device.fetch_events().unwrap();
         events.for_each(|event| {
             println!("{:?}", event);
             match event.kind() {
                 InputEventKind::Key(key) => {
+                    println!("{:?}", key);
                     // caps
                     match (key.code(), event.value()) {
                         (CAPS, 1) => is_caps_pressing = true,
@@ -76,8 +74,12 @@ fn main() -> Result<(), Box<dyn Error>> {
                     virtual_input
                         .write(EV_KEY, key.code() as i32, event.value())
                         .unwrap();
-                    if is_caps_pressing && key.code() == 38 {
-                        println!("++++++++++++++++++++++++++++LLLLLLLLLLLLLLLLLl+++++++++++++++++");
+                    if remap_enabled_lock {
+                        if is_caps_pressing && key.code() == 38 {
+                            println!(
+                                "++++++++++++++++++++++++++++LLLLLLLLLLLLLLLLLl+++++++++++++++++"
+                            );
+                        }
                     }
                 }
                 InputEventKind::Synchronization(_) => {
