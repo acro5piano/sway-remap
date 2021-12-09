@@ -27,10 +27,4 @@ with uinput.Device(KEYS) as virtual_uinput:
                 if event.code in CTRL_KEYS:
                     is_ctrl = event.value == 1 or event.value == 2
                 if is_ctrl and event.code == evdev.ecodes.KEY_F and event.value == 1:  # type: ignore
-                    # virtual_uinput.emit_combo([uinput.KEY_RIGHT])
-                    print(evdev.categorize(event))
-                    virtual_uinput.emit_click(uinput.KEY_RIGHT)
-
-                # virtual_uinput.emit_combo([uinput.KEY_LEFTALT, uinput.KEY_E])
-                # virtual_uinput.emit_combo([uinput.KEY_LEFTALT, uinput.KEY_E])
-                # virtual_uinput.emit_combo([uinput.KEY_LEFTALT, uinput.KEY_RIGHT])
+                    virtual_uinput.emit_combo([uinput.KEY_RIGHT])
