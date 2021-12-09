@@ -14,3 +14,4 @@ Cargo.lock
 
 /target
 sway-remap.yml
+__pycache__
