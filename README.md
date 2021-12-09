@@ -4,9 +4,9 @@ A keyboard remapper tool for Sway window manager. Still active development.
 
 # Motivation
 
-Sway and Wayland is awesome. It brings lots of benefit to Linux desktop environment.
+Sway and Wayland is awesome. It brings lots of benefits to Linux desktop environment.
 
-When I was using X desktop envionment, there is an awesome tool called `xremap` which remap keys **based on current focused application**.
+When I was using X desktop envionment, there is an awesome tool called `xremap` which remap keys **based on the current focused application**.
 
 https://github.com/k0kubun/xremap
 
@@ -22,7 +22,7 @@ sudo cp target/release/sway-remap /usr/local/bin
 sudo sway-remap sway-remap.yml
 ```
 
-where sway-remap.yml should be like this:
+where `sway-remap.yml` should be like this:
 
 ```yaml
 - applications:
@@ -38,7 +38,7 @@ where sway-remap.yml should be like this:
     - from: leftalt.v
       to: [capslock.v]
 
-    # Emacs like key binding (priority first)
+    # Emacs like key binding (high priority first)
     - from: leftalt.f
       to: [capslock.right]
     - from: leftalt.b
@@ -47,7 +47,6 @@ where sway-remap.yml should be like this:
       to: [capslock.delete]
     - from: capslock.leftalt.h
       to: [capslock.backspace]
-
     - from: capslock.f
       to: [right]
     - from: capslock.b
@@ -72,6 +71,7 @@ where sway-remap.yml should be like this:
 
 Note that:
 
+- You need to run `sudo modprobe uinput` before running it
 - `leftctrl` can be work, but not tested
 
 # Known bugs
