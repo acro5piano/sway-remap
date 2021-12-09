@@ -8,9 +8,6 @@ from config import example_config, Binding
 
 CTRL_KEYS = [evdev.ecodes.KEY_CAPSLOCK]  # type: ignore
 
-real_input = evdev.InputDevice('/dev/input/event4')
-print(real_input)
-
 EV_KEY = evdev.ecodes.EV_KEY  # type: ignore
 
 
@@ -18,7 +15,10 @@ def is_pressed(value: int) -> bool:
     return value == 1 or value == 2
 
 
-def run(config: list[Binding]):
+def run(config: list[Binding], path: str):
+    real_input = evdev.InputDevice(path)
+    print(real_input)
+
     is_ctrl = False
 
     with uinput.Device(ALL_KEYS) as virtual_uinput:
@@ -46,5 +46,5 @@ def run(config: list[Binding]):
 # for device in devices:
 #    print(device.path, device.name, device.phys)
 
-if __name__ == "__main__":
-    run(example_config)
+if __name__ == '__main__':
+    run(example_config, '/dev/input/event4')
