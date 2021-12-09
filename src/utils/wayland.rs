@@ -1,5 +1,6 @@
 use swayipc::reply;
 
+// TODO: not use unwrap. use result.
 pub fn get_window_class(evt: Option<Result<reply::Event, swayipc::Error>>) -> String {
     match evt {
         Some(Ok(reply::Event::Window(w))) => {
