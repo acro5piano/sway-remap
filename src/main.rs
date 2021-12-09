@@ -96,10 +96,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         let remap_enabled_ = *remap_enabled_cloned_2.lock().unwrap();
         let events = device.fetch_events().unwrap();
         events.for_each(|event| {
-            println!("{:?}", event);
             match event.kind() {
                 InputEventKind::Key(orig_key) => {
-                    // println!("{:?}", orig_key);
+                    println!("{:?} -> {:?}", orig_key, event.value());
 
                     if !remap_enabled_ {
                         virtual_input
@@ -118,58 +117,34 @@ fn main() -> Result<(), Box<dyn Error>> {
                     let mut handled = false;
                     settings_2.iter().for_each(|setting| {
                         setting.remap.iter().for_each(|remap| {
-                            // println!("{:?}", remap);
-                            if is_caps_pressing && remap.from.is_ctrl {
-                                if remap.from.keyname == keycodes::code_to_name(orig_key.code()) {
-                                    handled = true;
-                                    if remap.from.is_ctrl {
+                            if (is_caps_pressing && remap.from.is_ctrl)
+                                && remap.from.keyname == keycodes::code_to_name(orig_key.code())
+                            {
+                                handled = true;
+                                remap.to.iter().for_each(|to| {
+                                    if is_caps_pressing && !to.is_ctrl {
                                         virtual_input
                                             .write(EV_KEY, keycodes::name_to_code("capslock"), 0)
                                             .unwrap();
                                     }
-                                    remap.to.iter().for_each(|to| {
-                                        if to.is_ctrl {
-                                            virtual_input
-                                                .write(
-                                                    EV_KEY,
-                                                    keycodes::name_to_code("capslock"),
-                                                    1,
-                                                )
-                                                .unwrap();
-                                        }
-                                        virtual_input
-                                            .write(
-                                                EV_KEY,
-                                                keycodes::name_to_code(&to.keyname),
-                                                event.value(),
-                                            )
-                                            .unwrap();
-                                        if to.is_ctrl {
-                                            virtual_input
-                                                .write(
-                                                    EV_KEY,
-                                                    keycodes::name_to_code("capslock"),
-                                                    0,
-                                                )
-                                                .unwrap();
-                                        }
-                                    });
-                                } else {
-                                    // if remap.from.is_ctrl {
-                                    //     virtual_input
-                                    //         .write(
-                                    //             EV_KEY,
-                                    //             keycodes::name_to_code("capslock"),
-                                    //             event.value(),
-                                    //         )
-                                    //         .unwrap();
-                                    // }
-                                }
+                                    virtual_input
+                                        .write(
+                                            EV_KEY,
+                                            keycodes::name_to_code(&to.keyname),
+                                            event.value(),
+                                        )
+                                        .unwrap();
+                                });
                             }
                         });
                     });
 
                     if !handled {
+                        if is_caps_pressing {
+                            virtual_input
+                                .write(EV_KEY, keycodes::name_to_code("capslock"), 1)
+                                .unwrap();
+                        }
                         virtual_input
                             .write(EV_KEY, orig_key.code() as i32, event.value())
                             .unwrap();
