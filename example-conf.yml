@@ -4,8 +4,26 @@
   remap:
     - from: capslock.f
       to: [right]
+    - from: capslock.b
+      to: [left]
+    - from: capslock.n
+      to: [down]
+    - from: capslock.p
+      to: [up]
+    - from: capslock.y
+      to: [capslock.v]
+    - from: capslock.h
+      to: [backspace]
+    - from: capslock.d
+      to: [delete]
+    - from: capslock.a
+      to: [home]
+    - from: capslock.e
+      to: [end]
     - from: capslock.k
-      to: [leftshift.end, leftctrl.x]
+      to: [leftshift.end, capslock.x]
+    - from: alt.f
+      to: [leftshift.right]
 
     # - key: b
     #   with: capslock

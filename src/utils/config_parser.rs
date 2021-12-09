@@ -6,6 +6,7 @@ pub struct ConfigKeyCombination {
     pub is_ctrl: bool,
     pub is_shift: bool,
     pub keyname: String,
+    pub value: String,
 }
 
 impl<'de> Deserialize<'de> for ConfigKeyCombination {
@@ -27,6 +28,7 @@ impl<'de> Deserialize<'de> for ConfigKeyCombination {
             is_ctrl: is_ctrl,
             is_shift: is_shift,
             keyname: keyname.to_string(),
+            value: val,
         })
     }
 }

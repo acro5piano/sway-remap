@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let settings: Vec<Setting> =
         serde_yaml::from_str(&config_str).expect("Unable to read config file");
 
-    println!("{:?}", settings);
+    println!("[settings] {:?}", settings);
 
     let remap_enabled = Arc::new(Mutex::new(false));
     let mut handles = vec![];
@@ -61,10 +61,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .iter()
                 .any(|setting| setting.applications.iter().any(|app| app == &window_class))
             {
-                println!("Remap enabled for {}", window_class);
+                println!("[subscribe] Remap enabled for {}", window_class);
                 *remap_enabled_lock = true;
             } else {
-                println!("Remap disabled for {}", window_class);
+                println!("[subscribe] Remap disabled for {}", window_class);
                 *remap_enabled_lock = false;
             }
         }
@@ -89,6 +89,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     device.grab()?;
 
     let mut is_caps_pressing = false;
+    let mut is_alt_pressing = false;
+    let mut is_shift_pressing = false;
 
     let remap_enabled_cloned_2 = Arc::clone(&remap_enabled);
     let settings_2 = settings.clone();
@@ -98,7 +100,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         events.for_each(|event| {
             match event.kind() {
                 InputEventKind::Key(orig_key) => {
-                    println!("{:?} -> {:?}", orig_key, event.value());
+                    println!(
+                        "[InputEventKind::Key] {:?} -> {:?}",
+                        orig_key,
+                        event.value()
+                    );
 
                     if !remap_enabled_ {
                         virtual_input
@@ -122,9 +128,20 @@ fn main() -> Result<(), Box<dyn Error>> {
                             {
                                 handled = true;
                                 remap.to.iter().for_each(|to| {
+                                    println!("[remap.to] {}", to.value);
                                     if is_caps_pressing && !to.is_ctrl {
                                         virtual_input
                                             .write(EV_KEY, keycodes::name_to_code("capslock"), 0)
+                                            .unwrap();
+                                    }
+                                    if to.is_ctrl {
+                                        virtual_input
+                                            .write(EV_KEY, keycodes::name_to_code("capslock"), 1)
+                                            .unwrap();
+                                    }
+                                    if to.is_shift {
+                                        virtual_input
+                                            .write(EV_KEY, keycodes::name_to_code("leftshift"), 1)
                                             .unwrap();
                                     }
                                     virtual_input
@@ -134,6 +151,16 @@ fn main() -> Result<(), Box<dyn Error>> {
                                             event.value(),
                                         )
                                         .unwrap();
+                                    if to.is_shift {
+                                        virtual_input
+                                            .write(EV_KEY, keycodes::name_to_code("leftshift"), 0)
+                                            .unwrap();
+                                    }
+                                    if to.is_ctrl {
+                                        virtual_input
+                                            .write(EV_KEY, keycodes::name_to_code("capslock"), 0)
+                                            .unwrap();
+                                    }
                                 });
                             }
                         });
@@ -157,6 +184,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         });
     }));
+
+    println!("[main] sway-remap is ready.");
 
     for handle in handles {
         handle.join().unwrap();
