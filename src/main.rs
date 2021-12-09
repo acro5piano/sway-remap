@@ -117,13 +117,31 @@ fn main() -> Result<(), Box<dyn Error>> {
                     match (keycodes::code_to_name(orig_key.code()), event.value()) {
                         ("capslock", 1) => is_caps_pressing = true,
                         ("capslock", 0) => is_caps_pressing = false,
+                        ("leftalt", 1) => is_alt_pressing = true,
+                        ("leftalt", 0) => is_alt_pressing = false,
+                        ("rightalt", 1) => is_alt_pressing = true,
+                        ("rightalt", 0) => is_alt_pressing = false,
                         (_, _) => {}
                     }
 
                     let mut handled = false;
                     settings_2.iter().for_each(|setting| {
                         setting.remap.iter().for_each(|remap| {
-                            if (is_caps_pressing && remap.from.is_ctrl)
+                            if handled {
+                                return;
+                            }
+                            let should_handle = match (
+                                is_caps_pressing,
+                                remap.from.is_ctrl,
+                                is_alt_pressing,
+                                remap.from.is_alt,
+                                remap.from.keyname == keycodes::code_to_name(orig_key.code()),
+                            ) {
+                                (_, _, _, _, false) => false,
+                                (_, _, _, _, _) => false,
+                            };
+                            if ((is_caps_pressing && remap.from.is_ctrl)
+                                || (is_alt_pressing && remap.from.is_alt))
                                 && remap.from.keyname == keycodes::code_to_name(orig_key.code())
                             {
                                 handled = true;
@@ -132,6 +150,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                                     if is_caps_pressing && !to.is_ctrl {
                                         virtual_input
                                             .write(EV_KEY, keycodes::name_to_code("capslock"), 0)
+                                            .unwrap();
+                                    }
+                                    if is_alt_pressing && !to.is_alt {
+                                        virtual_input
+                                            .write(EV_KEY, keycodes::name_to_code("leftalt"), 0)
                                             .unwrap();
                                     }
                                     if to.is_ctrl {
@@ -170,6 +193,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                         if is_caps_pressing {
                             virtual_input
                                 .write(EV_KEY, keycodes::name_to_code("capslock"), 1)
+                                .unwrap();
+                        }
+                        if is_alt_pressing {
+                            virtual_input
+                                .write(EV_KEY, keycodes::name_to_code("leftalt"), 1)
                                 .unwrap();
                         }
                         virtual_input
