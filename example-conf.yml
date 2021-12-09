@@ -2,6 +2,15 @@
     - Brave-browser
     - firefoxdeveloperedition
   remap:
+    # OSX like key binding
+    - from: leftalt.a
+      to: [capslock.a]
+    - from: leftalt.c
+      to: [capslock.c]
+    - from: leftalt.v
+      to: [capslock.v]
+
+    # Emacs like key binding (priority first)
     - from: leftalt.f
       to: [capslock.right]
     - from: leftalt.b
@@ -31,6 +40,10 @@
       to: [end]
     - from: capslock.k
       to: [leftshift.end, capslock.x]
+
+    # Slack
+    - from: leftalt.x
+      to: [capslock.k]
 
     # - key: b
     #   with: capslock

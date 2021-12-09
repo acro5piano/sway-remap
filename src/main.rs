@@ -138,12 +138,12 @@ fn main() -> Result<(), Box<dyn Error>> {
                                 remap.from.keyname == keycodes::code_to_name(orig_key.code()),
                             ) {
                                 (_, _, _, _, false) => false,
+                                (true, true, false, false, true) => true,
+                                (false, false, true, true, true) => true,
+                                (true, true, true, true, true) => true,
                                 (_, _, _, _, _) => false,
                             };
-                            if ((is_caps_pressing && remap.from.is_ctrl)
-                                || (is_alt_pressing && remap.from.is_alt))
-                                && remap.from.keyname == keycodes::code_to_name(orig_key.code())
-                            {
+                            if should_handle {
                                 handled = true;
                                 remap.to.iter().for_each(|to| {
                                     println!("[remap.to] {}", to.value);
