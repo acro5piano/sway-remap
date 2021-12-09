@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-import evdev
-import uinput
+from keycode_map import keycode_map
+import uinput as k
 
 
 @dataclass
 class Binding:
     remap: str
-    to: list[tuple[int, int]]
+    to: list[list[tuple[int, int]]]
 
     def get_remap_keycode(self) -> str:
         """
@@ -14,11 +14,7 @@ class Binding:
         """
         _k = self.remap.split('.')
         key_name = _k[len(_k) - 1]
-        if key_name == 'f':
-            return evdev.ecodes.KEY_F  # type:ignore
-        if key_name == 'b':
-            return evdev.ecodes.KEY_B  # type:ignore
-        raise Exception("Not Found")
+        return keycode_map[key_name]
 
     def only_ctrl(self) -> bool:
         return 'ctrl' in self.remap
@@ -28,8 +24,15 @@ class Binding:
 
 
 example_config = [
-    Binding('ctrl.f', [uinput.KEY_RIGHT]),
-    Binding('ctrl.b', [uinput.KEY_LEFT]),
-    Binding('alt.f', [uinput.KEY_LEFTCTRL, uinput.KEY_RIGHT]),
-    Binding('alt.b', [uinput.KEY_LEFTCTRL, uinput.KEY_LEFT]),
+    Binding('ctrl.f', [[k.KEY_RIGHT]]),
+    Binding('ctrl.b', [[k.KEY_LEFT]]),
+    Binding('ctrl.p', [[k.KEY_UP]]),
+    Binding('ctrl.n', [[k.KEY_DOWN]]),
+    Binding('ctrl.k',
+            [[k.KEY_LEFTSHIFT, k.KEY_END], [k.KEY_LEFTCTRL, k.KEY_X]]),
+    Binding('ctrl.a', [[k.KEY_HOME]]),
+    Binding('ctrl.e', [[k.KEY_END]]),
+    Binding('ctrl.y', [[k.KEY_LEFTCTRL, k.KEY_V]]),
+    Binding('alt.f', [[k.KEY_LEFTCTRL, k.KEY_RIGHT]]),
+    Binding('alt.b', [[k.KEY_LEFTCTRL, k.KEY_LEFT]]),
 ]

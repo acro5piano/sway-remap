@@ -5,14 +5,7 @@ import uinput
 
 from all_keys import ALL_KEYS
 from config import example_config, Binding
-
-CTRL_KEYS = [evdev.ecodes.KEY_CAPSLOCK]  # type: ignore
-ALT_KEYS = [
-    evdev.ecodes.KEY_LEFTALT,  # type: ignore
-    evdev.ecodes.KEY_RIGHTALT,  # type: ignore
-]
-
-EV_KEY = evdev.ecodes.EV_KEY  # type: ignore
+from constants import ALL_KEYS, EV_KEY, CTRL_KEYS, ALT_KEYS
 
 
 def is_pressed(value: int) -> bool:
@@ -45,7 +38,8 @@ def run(config: list[Binding], path: str):
                             handled = True
                             virtual_uinput.emit(uinput.KEY_CAPSLOCK, 0)
                             virtual_uinput.emit(uinput.KEY_LEFTALT, 0)
-                            virtual_uinput.emit_combo(binding.to)
+                            for key_combo in binding.to:
+                                virtual_uinput.emit_combo(key_combo)
                             if is_ctrl:
                                 virtual_uinput.emit(uinput.KEY_CAPSLOCK, 1)
                             if is_alt:
