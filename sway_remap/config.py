@@ -41,4 +41,5 @@ example_config = [
     Binding('alt.a', [[k.KEY_LEFTCTRL, k.KEY_A]]),
     Binding('alt.c', [[k.KEY_LEFTCTRL, k.KEY_C]]),
     Binding('alt.v', [[k.KEY_LEFTCTRL, k.KEY_V]]),
+    Binding('alt.x', [[k.KEY_LEFTCTRL, k.KEY_X]]),
 ]
