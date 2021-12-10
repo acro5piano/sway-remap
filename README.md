@@ -1,4 +1,7 @@
+# Use this instead: https://github.com/acro5piano/wayremap
+
 # sway-remap
+
 
 A keyboard remapper tool for Sway window manager. Still active development.
 
